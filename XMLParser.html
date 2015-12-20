@@ -1,0 +1,150 @@
+<!doctype html>
+<html>
+    <head>
+    <meta charset="utf-8">
+    <meta name="description" content="This is the home page for CSCI 571 assignment #4">
+        <title>Network List</title>
+        <script language= "JavaScript"  type="text/javascript">
+        
+            function viewXML(xmlContent){
+           var URL = xmlContent.URL.value;
+            var isXml = URL.endsWith('.xml');
+           // alert("String"+isXml);
+            if(URL && isXml){
+                //Load XML function
+                function loadXML(url){
+                    if(window.XMLHttpRequest){
+                        xmlhttp = new XMLHttpRequest();   
+                    }else{
+                        xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");   
+                    }
+                    xmlhttp.open("GET",url,false);      //type of request,url,true (asynchronous) or false (synchronous)
+                    xmlhttp.send();
+                    if(xmlhttp.readyState == 4 && xmlhttp.status == 200){ //file not found case
+                         xmlDoc = xmlhttp.responseXML
+                         return xmlDoc;
+                    }else{
+                        alert("Could not find the file. Please give a valid location and filename.");
+                        return false;
+                    }
+                }//end of loadXML
+                xmlDoc = loadXML(URL);
+                if(xmlDoc){ //empty textbox case
+                    if(window.ActiveXObject){//for IE
+                        if(xmlDoc.parserError.errorCode!=0){ //if error, .errorCode returns long interger error code
+                            alert("Error in XML file!");
+                        }else{
+                            generateHTML(xmlDoc);
+                            if(emptyXmlFlag){
+                                newWindow=window.open("","Assignment4","height=800,width=1024");
+                                newWindow.document.write(html_text);
+                                newWindow.document.close();
+                            }
+                        }    
+                    }else{
+                        if(xmlDoc.documentElement.nodeName=="parsererror"){
+                           alert("Error in XML file!"); 
+                        }else{//if FF, load XML object
+                            xmlDoc.onload = generateHTML(xmlDoc);
+                            if(emptyXmlFlag){
+                                newWindow=window.open("","Assignment4","height=800,width=1024");
+                                newWindow.document.write(html_text);
+                                newWindow.document.close();
+                            }
+                        }
+                    }
+                }
+            }
+            else if(isXml<=0){
+            alert("This is not a XML file!")
+            }else{
+             alert("This field cannot be blank!");   
+            }
+        }//end of viewXML
+        
+        function hasWhiteSpace(str){
+           return !/[^\s]/.test(str);
+        }//end of hasWhiteSpace
+            
+        function generateHTML(xmlDoc){
+            html_text = null;
+            ELEMENT_NODE = 1;
+            emptyXmlFlag = true;
+            root = xmlDoc.documentElement;
+            html_text = '<html><head><title>Network List Result</title></head><body><div style="overflow-y:scroll; height:700px;">';
+            html_text+= "<table border='2'>";
+            headerNodeList = xmlDoc.getElementsByTagName("Header").item(0).childNodes;
+            networksRowList = xmlDoc.getElementsByTagName("Row");
+            html_text+= "<tbody>";
+            html_text+= "<tr>";
+            //printing headers of table
+            for(i = 0; i < headerNodeList.length; i ++){
+                if(headerNodeList.item(i).nodeType == ELEMENT_NODE){
+                 header = headerNodeList.item(i).firstChild.nodeValue;
+                 html_text+= "<th>"+header+"</th>";
+                }
+            }
+            html_text+= "</tr>";
+            if(networksRowList.length>0){
+                for(i =0 ; i < networksRowList.length ; i ++){
+                    rowNodeList = networksRowList.item(i).childNodes;
+                    html_text+="<tr>";
+                    for(j = 0; j < rowNodeList.length ; j++){
+                            if(rowNodeList.item(j).nodeType == ELEMENT_NODE){
+                                if(rowNodeList.item(j).nodeName == "Feeds"){
+                                    feedNodeList = rowNodeList.item(j).childNodes;
+                                    html_text+="<td><ul>"
+                                    for(k = 0 ; k < feedNodeList.length ; k++){
+                                        if(feedNodeList.item(k).firstChild != null && 
+                                           !(hasWhiteSpace(feedNodeList.item(k).firstChild.nodeValue))){
+                                        html_text+="<li>"+feedNodeList.item(k).firstChild.nodeValue+"</li>"; 
+                                        }
+                                            //html_text+="<li>null</li>";
+                                    }
+                                    html_text+="</ul></td>"
+                                }else if(rowNodeList.item(j).nodeName == "Logo"){
+                                    if(rowNodeList.item(j).firstChild != null){
+                                        html_text+="<td><img src='"+rowNodeList.item(j).firstChild.nodeValue+"'></td>";
+                                    }else
+                                        html_text+="<td></td>";
+                                }else if(rowNodeList.item(j).nodeName == "HomePage"){
+                                    if(rowNodeList.item(j).firstChild != null){
+                                        html_text+="<td><a href='"+rowNodeList.item(j).firstChild.nodeValue+"'>"
+                                                    +rowNodeList.item(j).firstChild.nodeValue+"</a></td>";
+                                    }else
+                                        html_text+="<td></td>";
+                                }else{
+                                    if(rowNodeList.item(j).firstChild != null){
+                                    html_text+="<td>"+rowNodeList.item(j).firstChild.nodeValue+"</td>";   
+                                    }else
+                                      html_text+="<td></td>"; 
+                                }
+
+                            }
+                    }
+                }
+            }else{
+             alert("No entries found for networklist!");   
+             emptyXmlFlag = false;
+            }
+            html_text+="</table></bo"+""+"dy>";
+            html_text+="</html>";    
+        }
+        </script> 
+    </head>
+
+    <body style="text-align: center;">
+        <div id="formDiv" style="margin: auto;">
+            <h3>Enter URL for company List XML file</h3>
+            <form name="networkForm" method="post" id="location">
+                <input type="text"  name="URL" maxlength="255" size="50" value="network.xml" />
+                <br><br>
+                <input type="button" value="Submit Query" name="Submit" onclick="viewXML(this.form)" />
+            </form>
+        </div>
+    <noscript>
+    </body>
+        
+        
+
+</html>
